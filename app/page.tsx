@@ -14,7 +14,7 @@ import { AlertCircle, Droplets, Upload } from 'lucide-react'
 interface PredictionData {
   rainfall: number;
   yield: number;
-  provider: 'openai' | 'anthropic' | 'historical';
+  provider: 'openai' | 'anthropic' | 'llama' | 'historical';
   timestamp: string;
   comment?: string;
 }
@@ -28,7 +28,7 @@ export default function Home() {
   const [rainfall, setRainfall] = useState<number>(900)
   const [chartData, setChartData] = useState<PredictionData[]>([])
   const [error, setError] = useState<string>('')
-  const [provider, setProvider] = useState<'openai' | 'anthropic'>('openai')
+  const [provider, setProvider] = useState<'openai' | 'anthropic' | 'llama'>('openai')
   const [isLoading, setIsLoading] = useState(false)
   const [latestPrediction, setLatestPrediction] = useState<PredictionData | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -130,7 +130,8 @@ export default function Home() {
           <p>Yield: {data.yield.toFixed(2)} metric tons/hectare</p>
           <Badge variant={
             data.provider === 'openai' ? 'default' :
-            data.provider === 'anthropic' ? 'secondary' : 'outline'
+            data.provider === 'anthropic' ? 'secondary' :
+            data.provider === 'llama' ? 'destructive' : 'outline'
           }>
             {data.provider}
           </Badge>
@@ -150,7 +151,7 @@ export default function Home() {
             <CardTitle>Malawi Farm Yield Predictor</CardTitle>
           </div>
           <CardDescription>
-            Enter rainfall data or upload a CSV file to predict farm yield using AI. Our model considers Malawi`s typical
+            Enter rainfall data or upload a CSV file to predict farm yield using AI. Our model considers Malawi's typical
             rainfall patterns and agricultural conditions.
           </CardDescription>
         </CardHeader>
@@ -172,13 +173,14 @@ export default function Home() {
                   Typical range: 725mm - 2,500mm annually
                 </p>
               </div>
-              <Select value={provider} onValueChange={(value: 'openai' | 'anthropic') => setProvider(value)}>
+              <Select value={provider} onValueChange={(value: 'openai' | 'anthropic' | 'llama') => setProvider(value)}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Select AI Provider" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="openai">OpenAI</SelectItem>
                   <SelectItem value="anthropic">Anthropic</SelectItem>
+                  <SelectItem value="llama">Llama</SelectItem>
                 </SelectContent>
               </Select>
               <Button type="submit" disabled={isLoading}>
@@ -203,7 +205,7 @@ export default function Home() {
               <Upload className="mr-2 h-4 w-4" /> Upload CSV
             </Button>
             <p className="text-sm text-muted-foreground mt-1">
-              Upload a CSV file with `rainfall`` and `yield columns
+              Upload a CSV file with 'rainfall' and 'yield' columns
             </p>
           </div>
 
@@ -221,7 +223,11 @@ export default function Home() {
                 <p className="text-2xl font-bold">
                   {latestPrediction.yield.toFixed(2)} metric tons/hectare
                 </p>
-                <Badge variant={latestPrediction.provider === 'openai' ? 'default' : 'secondary'}>
+                <Badge variant={
+                  latestPrediction.provider === 'openai' ? 'default' :
+                  latestPrediction.provider === 'anthropic' ? 'secondary' :
+                  'destructive'
+                }>
                   {latestPrediction.provider}
                 </Badge>
               </div>
@@ -240,6 +246,7 @@ export default function Home() {
               <div className="flex gap-2 mb-4">
                 <Badge variant="default">OpenAI</Badge>
                 <Badge variant="secondary">Anthropic</Badge>
+                <Badge variant="destructive">Llama</Badge>
                 <Badge variant="outline">Historical</Badge>
               </div>
               <ChartContainer
@@ -263,13 +270,14 @@ export default function Home() {
                     />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend />
-                    {['openai', 'anthropic', 'historical'].map((p) => (
+                    {['openai', 'anthropic', 'llama', 'historical'].map((p) => (
                       <Scatter
                         key={p}
                         name={p.charAt(0).toUpperCase() + p.slice(1)}
                         data={chartData.filter(d => d.provider === p)}
                         fill={p === 'openai' ? 'var(--primary)' : 
-                              p === 'anthropic' ? 'var(--secondary)' : 
+                              p === 'anthropic' ? 'var(--secondary)' :
+                              p === 'llama' ? 'var(--destructive)' :
                               'var(--muted)'}
                         line={true}
                         shape="circle"
